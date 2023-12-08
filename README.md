@@ -470,3 +470,218 @@ final DUMMY_BOOKS =  [
 ];
 
 
+/*******************************/***********
+
+class CategoryScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        leading: const Icon(Icons.book_outlined),
+        title: const Text('BOOKS'),
+      ),
+      body: GridView(
+        gridDelegate:  const SliverGridDelegateWithMaxCrossAxisExtent(
+          maxCrossAxisExtent:
+          200,
+          childAspectRatio:
+          3 / 2,
+          crossAxisSpacing: 20,
+          mainAxisSpacing: 20,
+        ),
+        children: DUMMY_CATEGORIES
+            .map((bookData) =>
+            CategoryItem(bookData.id, bookData.title, bookData.color))
+            .toList(),
+      ),
+    );
+  }
+}
+
+
+/**************************/******************************
+
+class CategoryItem extends StatefulWidget {
+  final String id;
+  final String title;
+  final Color color;
+  CategoryItem(this.id, this.title, this.color);
+
+  @override
+  State<CategoryItem> createState() => _CategoryItemState();
+}
+
+class _CategoryItemState extends State<CategoryItem> {
+  void selectCategory(BuildContext ctx) {
+    Navigator.of(ctx).pushNamed(
+      'category-books',
+      arguments: {
+        'id': widget.id,
+        'title': widget.title,
+      },
+    );
+  }
+
+
+/*****************/******************
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () => selectCategory(context),
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        alignment: Alignment.center,
+        child: Text(
+          widget.title,
+          style: TextStyle(
+            fontSize: 22,
+            color: Colors.white,
+          ),
+        ),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              widget.color.withOpacity(0.7),
+              widget.color,
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(15),
+        ),
+      ),
+    );
+  }
+}
+
+class BookCategoryScreen extends StatefulWidget {
+
+  @override
+  State<BookCategoryScreen> createState() => _BookCategoryScreenState();
+}
+
+class _BookCategoryScreenState extends State<BookCategoryScreen> {
+
+  final titleController = TextEditingController();
+
+  void _addBook(String title, String category){
+    Book newBook = Book(id: 'b${DUMMY_BOOKS.length+1}', title: title, categories: [category]);
+    setState(() {
+      DUMMY_BOOKS.add(newBook);
+    });
+    Navigator.of(context).pop();
+  }
+
+  void _startAddNewBooks(BuildContext ctx, String categoryTitle){
+    showModalBottomSheet(
+      context: ctx,
+      builder: (ctx){
+        return GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: (){},
+          child: Card(
+            elevation: 5,
+            child: Column(
+              children: [
+                TextField(
+                  decoration: const InputDecoration(labelText: 'Title'),
+                  controller: titleController,
+                ),
+                TextButton(
+                  child: const Text('Add Book'),
+                  onPressed: () {
+                    _addBook(
+                        titleController.text,
+                        categoryTitle,
+                    );
+                    titleController.clear();
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final routeArgs =
+    ModalRoute.of(context)!.settings.arguments as Map<String, String>;
+    final String categoryTitle = routeArgs['title']!;
+    final String categoryId = routeArgs['id']!;
+
+    final categoryBooks = DUMMY_BOOKS.where( (book){
+      return book.categories.contains(categoryId);
+    }).toList();
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(categoryTitle),
+      ),
+      body: Center(
+        child: ListView.builder(
+          itemBuilder: (ctx,index){
+            return Card(
+              child: ListTile(
+                title: Text(
+                  categoryBooks[index].title,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.brown,
+                  ),
+                ),
+              ),
+            );
+          },
+          itemCount: categoryBooks.length,
+        ),
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: Colors.brown[100],
+        items:  [
+          BottomNavigationBarItem(
+              icon: IconButton(onPressed: (){
+                Navigator.of(context).pop();
+                },
+                  icon: Icon(Icons.home)),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+              icon: IconButton(
+                  onPressed: (){
+                    _startAddNewBooks(context, categoryId);
+                    },
+                  icon: Icon(Icons.add)),
+            label: 'Add',
+          ),
+        ],
+      ),
+    );
+  }
+}
+/***///////////*****************
+
+class Book{
+
+  final String id;
+  final String title;
+  List<String> categories;
+
+  Book({
+    required this.id,
+    required this.title,
+    required this.categories
+});
+
+}
+
+class Category {
+  final String id;
+  final String title;
+  final Color color;
+  const Category(
+      {required this.id, required this.title, this.color = Colors.orange});
+}
+
+
